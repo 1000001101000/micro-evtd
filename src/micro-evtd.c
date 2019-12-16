@@ -612,10 +612,11 @@ static void system_set_watchdog(char cTimer)
 static int execute_command2(char cmd, char* cmdstring, char type, char cmd2, long cmd3)
 {
 	char strEventScript[CMDLINE_LENGTH];
-	size_t length;
+	//size_t length;
 
 	// Create the command line
-	length = snprintf(strEventScript, CMDLINE_LENGTH, "%smicro-evtd.event %c %d %ld %s %s %d %c",
+	//size_t length = 
+        snprintf(strEventScript, CMDLINE_LENGTH, "%smicro-evtd.event %c %d %ld %s %s %d %c",
 		(CP_SCRIPT == cmd ? "" : strTmpPath),	// for copying call the event script via PATH
 		cmd,
 		cmd2,
