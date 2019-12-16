@@ -9,7 +9,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Run a one-line script
+    - name: enable execution of script
       run: chmod +x .github/scripts/build.sh
-    - name: Run a one-line script
+    - name: Run build script
       run: .github/scripts/build.sh
