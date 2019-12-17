@@ -31,6 +31,10 @@ jobs:
       run: cp bin/micro-evtd bins/micro-evtd-armel
     - name: make clean
       run: make clean
+    - name: build amd64 binary
+      run: make
+    - name: copy arm64 bin to output directory
+      run: cp bin/micro-evtd bins/micro-evtd-amd64
     - name: find
       run: find bins
     #- name: enable execution of script
