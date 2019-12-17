@@ -16,7 +16,9 @@ jobs:
     - name: unpack armhf toolchain
       run: tar xf gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
     - name: build armhf binary
-      run: make make CROSS_COMPILE="gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-"
+      run: make CROSS_COMPILE="gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-"
+    - name: find
+      run: find .
     #- name: enable execution of script
     #  run: chmod +x .github/scripts/build.sh
     #- name: Run build script
