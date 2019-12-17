@@ -26,14 +26,15 @@ jobs:
     - name: unpack armel toolchain
       run: tar xf gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabi.tar.xz
     - name: build armel binary
-      run: make CROSS_COMPILE="gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabi/bin/arm-linux-gnueabi-"
+      run: make CROSS_COMPILE="gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabi/bin/arm-linux-gnueabi-" CFLAGS="-Wall -Os -fPIE -fPIC" LDFLAGS="-pie"
+
     - name: copy armel bin to output directory
       run: cp bin/micro-evtd bins/micro-evtd-armel
     - name: make clean
       run: make clean
     - name: build amd64 binary
       run: make
-    - name: copy arm64 bin to output directory
+    - name: copy amd64 bin to output directory
       run: cp bin/micro-evtd bins/micro-evtd-amd64
     - name: set git user name
       run: git config user.name "workflow@github" 
@@ -42,7 +43,7 @@ jobs:
     - name: add new files to repo if needed
       run: git add bins/*
     - name: commit new files
-      run: git commit -a -m "commit binaries built from latest source"
+      run: git commit -a -m "commit binaries built from latest source" || exit 0
     - name: push changes
       run: git push https://${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/${{github.repository}}.git HEAD:master
  
