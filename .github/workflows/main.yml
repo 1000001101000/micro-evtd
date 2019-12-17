@@ -14,7 +14,7 @@ jobs:
     - name: download armhf toolchain
       run: wget https://releases.linaro.org/components/toolchain/binaries/7.5-2019.12/arm-linux-gnueabihf/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
     - name: unpack armhf toolchain
-      run: tar xf gcc-linaro-$version-x86_64_arm-linux-gnueabihf.tar.xz
+      run: tar xf gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
     - name: build armhf binary
       run: make make CROSS_COMPILE="gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-"
     #- name: enable execution of script
