@@ -21,16 +21,12 @@ jobs:
     #  run: tar xf gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
     #- name: build armhf binary
     #  run: make CROSS_COMPILE="gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-"
-    #- name: copy armhf bin to output directory
-    #  run: cp bin/micro-evtd bins/micro-evtd-armhf
-    #- name: make clean
-    #  run: make clean
-    #- name: download armel toolchain
-    #  run: wget https://releases.linaro.org/components/toolchain/binaries/7.5-2019.12/arm-linux-gnueabi/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabi.tar.xz
-    #- name: unpack armel toolchain
-    #  run: tar xf gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabi.tar.xz
-#    - name: build armel binary
-#      run: make CROSS_COMPILE="gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabi/bin/arm-linux-gnueabi-" CFLAGS="-Wall -fPIE -fPIC" LDFLAGS="-pie"
+    - name: build armhf binary
+      run: make CROSS_COMPILE="arm-linux-gnueabihf-"
+    - name: copy armhf bin to output directory
+      run: cp bin/micro-evtd bins/micro-evtd-armhf
+    - name: make clean
+      run: make clean
     - name: build armel binary
       run: make CROSS_COMPILE="arm-linux-gnueabi-"
     - name: copy armel bin to output directory
