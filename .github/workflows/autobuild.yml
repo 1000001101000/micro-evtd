@@ -6,8 +6,8 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    container: 'node:current'
+    container: 'debian:9'
 
     steps:
       - name: test
-        run: ls
+        run: echo "here"
