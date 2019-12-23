@@ -1,0 +1,12 @@
+name: Generate Binaries
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      using: 'docker'
+      image: 'docker://debian:stetch-slim'
