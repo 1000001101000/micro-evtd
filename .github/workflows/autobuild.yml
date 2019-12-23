@@ -6,7 +6,8 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    container: 'node:current'
 
     steps:
-      using: 'docker'
-      image: 'docker://debian:stetch-slim'
+      name: test
+      run: ls
