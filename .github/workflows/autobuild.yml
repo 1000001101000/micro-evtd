@@ -9,5 +9,5 @@ jobs:
     container: 'node:current'
 
     steps:
-      name: test
-      run: ls
+      - name: test
+      - run: ls
