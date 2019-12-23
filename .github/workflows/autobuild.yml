@@ -13,7 +13,7 @@ jobs:
     - name: make output directory if needed
       run: mkdir bins || exit 0
     - name: update apt
-      run: sudo apt-get update || exit 0
+      run: apt-get update 
     - name: ensure build packages are installed
       run: sudo apt-get install libc6-armel-cross libc6-dev-armel-cross binutils-arm-linux-gnueabi libncurses5-dev gcc-arm-linux-gnueabihf gcc-arm-linux-gnueabi 
     - name: build armhf binary
