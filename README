@@ -1,6 +1,8 @@
 Fork of the original tool for interfacing with the on-board microcontroller on the early linkstations. The original is still included as part of the installation for the LS-GL Debian Installer.
 
-This version includes a few tweaks/fixes to allow the longer commands used to contol LCD displays to function properly. 
+This version includes a few tweaks/fixes to allow the longer commands used to contol LCD displays to function properly.
+
+See bins/ folder for pre-built binaries for each platform.
 
 Information about the messages that can be used can be found here:
 https://buffalonas.miraheze.org/wiki/Terastation_Microcontroller_Interface
