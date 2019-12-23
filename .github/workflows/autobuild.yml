@@ -9,5 +9,34 @@ jobs:
     container: 'debian:9'
 
     steps:
-      - name: test
-        run: cat /etc/*release
+    - uses: actions/checkout@v1
+    - name: make output directory if needed
+      run: mkdir bins || exit 0
+    - name: update apt
+      run: sudo apt-get update || exit 0
+    - name: ensure build packages are installed
+      run: sudo apt-get install libc6-armel-cross libc6-dev-armel-cross binutils-arm-linux-gnueabi libncurses5-dev gcc-arm-linux-gnueabihf gcc-arm-linux-gnueabi 
+    - name: build armhf binary
+      run: make CROSS_COMPILE="arm-linux-gnueabihf-"
+    - name: copy armhf bin to output directory
+      run: cp bin/micro-evtd bins/micro-evtd-armhf
+    - name: make clean
+      run: make clean
+    - name: build armel binary
+      run: make CROSS_COMPILE="arm-linux-gnueabi-"
+    - name: copy armel bin to output directory
+      run: cp bin/micro-evtd bins/micro-evtd-armel
+    - name: make clean
+      run: make clean
+    - name: build amd64 binary
+      run: make
+    - name: copy amd64 bin to output directory
+      run: cp bin/micro-evtd bins/micro-evtd-amd64
+    - name: set git user name
+      run: git config user.name "workflow@github" 
+    - name: set git user email
+      run: git config user.email "workflow@github"
+    - name: add new files to repo if needed
+      run: git add bins/*
+    - name: commit new files
+      run: git commit -a -m "commit binaries built from latest source" || exit 0
