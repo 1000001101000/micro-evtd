@@ -10,4 +10,4 @@ jobs:
 
     steps:
       - name: test
-      - run: ls
+        run: ls
