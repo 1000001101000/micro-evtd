@@ -15,7 +15,7 @@ jobs:
     - name: update apt
       run: apt-get update 
     - name: ensure build packages are installed
-      run: apt-get -y install libc6-armel-cross libc6-dev-armel-cross binutils-arm-linux-gnueabi libncurses5-dev gcc-arm-linux-gnueabihf gcc-arm-linux-gnueabi build-essential
+      run: apt-get -y install libc6-armel-cross libc6-dev-armel-cross binutils-arm-linux-gnueabi libncurses5-dev gcc-arm-linux-gnueabihf gcc-arm-linux-gnueabi build-essential git
     - name: build armhf binary
       run: make CROSS_COMPILE="arm-linux-gnueabihf-"
     - name: copy armhf bin to output directory
