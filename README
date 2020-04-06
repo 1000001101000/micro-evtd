@@ -1,3 +1,5 @@
+If this project helps you click the Star at the top of the page to let me know!
+
 Fork of the original tool for interfacing with the on-board microcontroller on the early linkstations. The original is still included as part of the installation for the LS-GL Debian Installer.
 
 This version includes a few tweaks/fixes to allow the longer commands used to contol LCD displays to function properly.
