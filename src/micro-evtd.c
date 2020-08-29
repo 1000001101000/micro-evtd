@@ -46,7 +46,10 @@
 #include <sys/sem.h>
 #include <sys/file.h>
 
+#if !defined(__powerpc__)
 #include <sys/io.h>
+#endif
+
 #include <syslog.h>
 
 #include <sys/resource.h>
