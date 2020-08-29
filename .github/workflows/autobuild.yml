@@ -15,7 +15,7 @@ jobs:
     - name: update apt
       run: apt-get update 
     - name: ensure build packages are installed
-      run: apt-get -y install libc6-armel-cross libc6-dev-armel-cross binutils-arm-linux-gnueabi libncurses5-dev gcc-arm-linux-gnueabihf gcc-arm-linux-gnueabi build-essential git
+      run: apt-get -y install gcc-powerpc-linux-gnu libc6-armel-cross libc6-dev-armel-cross binutils-arm-linux-gnueabi libncurses5-dev gcc-arm-linux-gnueabihf gcc-arm-linux-gnueabi build-essential git
     - name: build armhf binary
       run: make CROSS_COMPILE="arm-linux-gnueabihf-"
     - name: copy armhf bin to output directory
@@ -26,6 +26,12 @@ jobs:
       run: make CROSS_COMPILE="arm-linux-gnueabi-"
     - name: copy armel bin to output directory
       run: cp bin/micro-evtd bins/micro-evtd-armel
+    - name: make clean
+      run: make clean
+    - name: build powerpc binary
+      run: make CROSS_COMPILE="powerpc-linux-gnu-"
+    - name: copy powerpc bin to output directory
+      run: cp bin/micro-evtd bins/micro-evtd-powerpc
     - name: make clean
       run: make clean
     - name: build amd64 binary
