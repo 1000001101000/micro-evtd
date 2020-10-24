@@ -317,7 +317,6 @@ static int writeUART(int n, unsigned char* output)
 		}
 
 	}
-	//while (--retries > 0);
 
 	lockMutex(0);
 	return iReturn;
