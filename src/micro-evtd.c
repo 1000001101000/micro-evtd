@@ -296,14 +296,12 @@ again:
 					iReturn = (int)rbuf[2+len-4];
 				}
 
-				goto exit;
+				break;
 			}
 		}
 	} while (--retries > 0);
 
-exit:
 	lockMutex(0);
-
 	return iReturn;
 }
 
