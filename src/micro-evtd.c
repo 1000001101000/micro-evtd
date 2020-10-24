@@ -233,7 +233,8 @@ static int writeUART(int n, unsigned char* output)
 
 	lockMutex(1);
 
-	do {
+	while (retries-- > 0)
+	{
 		int len = -1;
 
 		/* Send data */
@@ -286,7 +287,7 @@ static int writeUART(int n, unsigned char* output)
 		}
 
 		//if we got this far the micon responded, no need to retry
-		retries = 1; //it gets --'d later... probably rework that
+		retries = 0;
 
 		// Check if returned command matches sent command
 		if (rbuf[1] != output[1])
@@ -315,7 +316,8 @@ static int writeUART(int n, unsigned char* output)
 			}
 		}
 
-	} while (--retries > 0);
+	}
+	//while (--retries > 0);
 
 	lockMutex(0);
 	return iReturn;
