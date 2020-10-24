@@ -208,13 +208,11 @@ static void lockMutex(char iLock) {
 */
 static int writeUART(int n, unsigned char* output)
 {
-	/* Handle ALL UART messages from a central point, reduce code
-	 * overhead */
 	unsigned char icksum = 0;
 	unsigned char rbuf[35];
 	unsigned char tbuf[35];
 	char retries = 2;
-	int i;
+	int i = 0;
 	fd_set fReadFS;
 	struct timeval tt_TimeoutPoll;
 	int iReturn = -1;
@@ -229,18 +227,24 @@ static int writeUART(int n, unsigned char* output)
 
 		tbuf[n] = icksum;
 	}
+        /*********** or else what? *********/
+	//min should probably be 2 to be a valid command
+	//could check max length while at it
 
 	lockMutex(1);
 
 	do {
 		int len = -1;
 
-		/* We got data to send? */
-		if (n >0) {
-			/* Send data */
-			iResult = write(i_FileDescriptor, tbuf, n+1);
-			if (iResult < n+1)
-				goto again;
+		/* Send data */
+		iResult = write(i_FileDescriptor, tbuf, n+1);
+
+		//if writing to serial port appears to have failed
+		if (iResult < n+1)
+		{
+			printf("%s: %d\n", "serial write failed",n);
+			reset();
+			continue;
 		}
 
 		tt_TimeoutPoll.tv_usec = 500000;
@@ -259,46 +263,58 @@ static int writeUART(int n, unsigned char* output)
 		}
 
 		/* Too little data? Yes, its an error */
-		if (len < 4) {
-again:
-			reset();
+		//mode + cmd + status + checksum
+		if (len < 4)
+		{
+			printf("%s: %d\n", "no response",n);
+                        reset();
+                        continue;
 		}
 
 		/* We received some data */
-		else if (len>0) {
-			// Calculate data sum for validation
-			icksum = 0;
-			for (i=0;i<len;i++)
-				icksum -= rbuf[i];
+		// Calculate data sum for validation
+		icksum = 0;
+		for (i=0;i<len;i++)
+			icksum -= rbuf[i];
 
-			// Process if data valid
-			if (0 == icksum){
-				if (n>0) {
-					// Check returned command status
-					if (rbuf[1] == output[1])
-						n = 0;
-				}
+		// Process if data valid
+		if (icksum !=0)
+		{
+			printf("%s: %d\n", "invalid checksum received",icksum);
+                        reset();
+                        continue;
+		}
+
+		//if we got this far the micon responded, no need to retry
+		retries = 0;
+
+		// Check if returned command matches sent command
+		if (rbuf[1] != output[1])
+		{
+			printf("%s: %d\n", "invalid command",output[1]);
+			break;
+		}
+
+		//0 == success
+		iReturn = (int)rbuf[2+len-4];
+
+		//if response larger than min, data returned
+		if (len > 4)
+		{
+			//if command is known to return a string, zero terminate and print as string
+			if ((rbuf[1] & 0x90) || (rbuf[1] & 0xa0) || ((rbuf[1] >= 0x80) && (rbuf[1] <= 0x83)))
+			{
+				rbuf[len-1]=0;
+				printf("%s\n",rbuf + 2);
 			}
-
-			if (0 == n) {
-				iReturn = (int)rbuf[2];
-				if (len-3 > 1) {
-					if ((rbuf[1] & 0x90) ||(rbuf[1] & 0xa0) || ((rbuf[1] >= 0x80) && (rbuf[1] <= 0x83)))
-					{
-						rbuf[len-1]=0;
-						printf("%s\n",rbuf + 2);
-					}
-					else
-					{
-						for (i=0;i<len-4;i++)
-							printf("%d ", rbuf[2+i]);
-					}
-					iReturn = (int)rbuf[2+len-4];
-				}
-
-				break;
+			else
+			{
+				//iterate through data bytes and print
+				for (i=0;i<len-4;i++)
+					printf("%d ", rbuf[2+i]);
 			}
 		}
+
 	} while (--retries > 0);
 
 	lockMutex(0);
@@ -371,15 +387,23 @@ int main(int argc, char *argv[])
 			// Allocate device
 			open_serial();
 			// Loop through batched commands
+			// is there any validation to do at this step? invalid chars?
 			pos = strtok(*argv, ", ");
 			while (pos != 0) {
 				// Get command length
 				iLen = strlen(pos)/2;
+				//if iLen not even it's invalid...
 				// convert each set of two hex chars to corresponding byte
 				for (i=0;i<iLen;i++)
 					sscanf(pos+2*i, "%2hhx", &uiMessage[i]);
+					//what does this do with non-hex chars?
+
 				// Push it out and return result
 				i = writeUART(iLen, uiMessage);
+				//writeUART handles retries, reports back success/fail sort of
+				//if it failed, do we continue or stop and return error?
+				//maybe a flag? or just have user call multiple times if needed?
+				//seems like return failure on first failure allow sane return code
 				if (iNotQuiet)
 					printf("%d\n", i);
 				// Locate anymore commands?
