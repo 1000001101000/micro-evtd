@@ -1,98 +1,18 @@
-To Do List for Linkstation/Kuro/Terastation Micro Event daemon
+To Do List
 ==============================================================
 
-* Config file:
-  * Only read by micro-evtd.c. Event script is only called by micro-evtd.
-  * What happens when it is empty? First analysis shows defaults are used.
-  * How should a sample file be named? micro-evtd.sample?
-  * How should the real config file be named? /etc/micro-evtd.conf? /etc/micro-evtd?
-  * Where should a sample file be kept? /etc/defaults/....?
-    Keep extra /etc/micro-evtd/ folder to store sample file and real config file?
-  * Shouldn't it be in /usr/local/etc/ ?
+update readme to reflect current functionality/purpose
+set new version number and title
+simplify makefile to reflect current codebase
+add make target for static binary
+investigate ways to generate binaries for ancient kernels (2.4.17)
+add option to specify serial device
+investigate an auto-detect function for serial device
+rework program flow to remove goto statements
+rework program flow to minimize global vars
+add logic to set return code on various failures.
+look at creating debug logic to print raw messages 
+add support for micon V1 in addition to current micon V2
+investigate logic to support alternate OS (FreeBSD/NetBSD/Windows)
 
-* InitRD:
-  * update for further alpha testing
-  * "<TMP>/in_standby" comes from /linuxrc of initrd
-    renamed to "micro-evtd.in_standby", adopt /linuxrc accordingly
-  * create target to help update an initrd
-
-* Install target:
-  * RC links
-    * Simple link ok, sufficient and complete?
-      ln -s ../init.d/micro-evtd /etc/rcS.d/S70micro-evtd
-    * On Debian also update-rc.d and invoke-rc.d could be used
-      if [ -e '/etc/debian_version'] / if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
-  * man pages
-    Adopt man db update
-    if [ -x "`which mandb 2>/dev/null`" ]; then
-  * Add target to update InitRd if /initrd exists in install path
-
-* Review changes before release (always)
-  * always refer to Filesystem Hierarchy Standard - http://www.pathname.com/fhs/
-  * run tests on clean stock firmware, Freelink 1.0rev2 and Freelink "Debian Lenny"
-    check that needed directories are available or created on them
-
-* New features
-  * Options to disable the sleep functionality and the script copy.
-    As not all targets/distros have initrd support. (Ryan Tandy)
-    Provide run-time(!) option to have one executable for all. Manageable? (Maddes)
-      micro-evtd.conf: SCRIPT_COPY=1; 0 would set a new var strScriptPath to "",
-                       otherwise it contains a copy of strTmpPath;
-  * Autoconf support. (Ryan Tandy)
-    Not required anymore as fixed pathes have been eliminated a lot.
-    But could help distros to adopt to their filesystem scheme. (Maddes)
-
-
-
-Done:
-=====
-+ Versioning
-  + Add last committed svn revision to version.h (via Makefile)
-
-- Create correct tgz files for man pages via Makefile and place correctly with "install" target
-  Not necessary, distributions can also handle this if wanted.
-
-+ SBIN_PREFIX support
-  to allow installing into /usr/local/sbin (default), /usr/sbin or /sbin
-  + daemon script uses fix path /usr/local
-    micro-evtd.init(34): which ${DAEMON}
-  + Makefile can already verify and install with different prefixes
-    support for /usr/sbin and /sbin enabled
-  + event script belongs inside sbin folder, not inside /etc
-    event script copies itself to tmp folder; use $0 instead of fix path
-    micro-evtd.event(58): which micro-evtd.event
-  + micro-evtd.c references event script too; no path and use PATH search, problems?
-    micro-evtd.c(607): let path find it
-  - or add new config item SBIN=/usr/local/sbin to /etc/micro-evtd.conf; very flexible, no recompilation necessary; default?
-
-- use /tmp/micro-evtd/ to place temporary files to avoid collisions with other programs
-  Linkstations have a ramdisk for /tmp, so sub-folders get lost
-  And the ramdisk is the reason for the script copy, to avoid permanent disk access and allow the disk to sleep.
-
-+ Analyse and adopt changes from Debian package 3.3.3
-  - eventscript.patch (debian-specific, not important)
-  - makefile.patch (debian-specific, not important)
-  - micro_evtd-default-conf.patch (looks wrong, as there's no /etc/defaults file anymore)
-  - script-paths.patch (looks wrong, as Linkstations use ramdisk for /tmp, so sub-folders get lost on reboot)
-  all other patches have been added to repository
-
-+ File name cleanup:
-  + general rename from "micro_evtd" (underscore) to "micro-evtd"
-  + files in /boot are not renamed to be compatible with old versions of initrd
-    /boot/pending_standby
-
-+ Uninstall target:
-  + should clean up all old stuff (or use additional target "removeold")
-    (Davy Gravy's debian disk image)
-    /usr/local/share/man/man5/micro_evtd.conf.5
-    /usr/local/share/man/man8/micro_evtd.event.8
-    /usr/local/share/man/man8/microapl.8
-    /usr/local/share/man/man8/micro_evtd.8
-    /usr/local/share/man/man1/micro_evtd.1.gz
-    /usr/local/sbin/microapl
-    /usr/local/sbin/micro_evtd
-    /etc/micro_evtd
-    /etc/micro_evtd/micro_evtd.conf
-    /etc/micro_evtd/micro_evtd.event
-    /etc/init.d/micro_evtd
-  + search old files in forum thread
+generally ensure code works with kernels 2.4 -> 5.8+ on armv5/armv7/PowerPC/mips/amd64
