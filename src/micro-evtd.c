@@ -29,10 +29,6 @@
 #include <sys/sem.h>
 #include <sys/file.h>
 
-#if !defined(__powerpc__)
-//#include <sys/io.h>
-#endif
-
 // Some global variables with default values
 const char strTitle[]="Micro Event Daemon for LSP/LSL/Kuro/TS";
 const char strVersion[]="3.4";

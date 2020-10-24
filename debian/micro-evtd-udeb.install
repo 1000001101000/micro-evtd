@@ -1,8 +1,0 @@
-bin/micro-evtd usr/sbin/
-files/microapl usr/sbin/
-files/micro-evtd.event usr/sbin/
-files/micro-evtd.conf etc/
-debian/udeb/micro-evtd.command usr/sbin/
-debian/udeb/debian-installer-startup.d/S99micro-evtd lib/debian-installer-startup.d/
-debian/udeb/base-installer.d/10micro-evtd usr/lib/base-installer.d/
-debian/udeb/finish-install.d/21micro-evtd usr/lib/finish-install.d/

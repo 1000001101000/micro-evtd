@@ -1,5 +1,0 @@
-#!/bin/sh
-
-if micro-evtd.command -t; then
-	micro-evtd.command finish
-fi

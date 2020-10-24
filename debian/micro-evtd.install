@@ -1,4 +1,0 @@
-bin/micro-evtd usr/sbin/
-files/microapl usr/sbin/
-files/micro-evtd.event usr/sbin/
-files/micro-evtd.conf etc/

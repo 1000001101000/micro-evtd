@@ -1,4 +1,0 @@
-version=3
-opts=downloadurlmangle=s/$/?view=tar/,filenamemangle=s/.*\/([\d\.]+)\//micro-evtd-$1.tar.gz/ \
-http://ppc-evtd.svn.sourceforge.net/viewvc/ppc-evtd/micro-evtd/tags/ \
-([\d\.]+)/ debian debian/urepack

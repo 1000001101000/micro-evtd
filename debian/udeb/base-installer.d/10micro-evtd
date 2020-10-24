@@ -1,6 +1,0 @@
-#!/bin/sh
-
-# Queue micro-evtd for installation on supported devices
-if micro-evtd.command -t; then
-	apt-install micro-evtd
-fi
