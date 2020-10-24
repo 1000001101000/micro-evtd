@@ -286,7 +286,7 @@ static int writeUART(int n, unsigned char* output)
 		}
 
 		//if we got this far the micon responded, no need to retry
-		retries = 0;
+		retries = 1; //it gets --'d later... probably rework that
 
 		// Check if returned command matches sent command
 		if (rbuf[1] != output[1])
