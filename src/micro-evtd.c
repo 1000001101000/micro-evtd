@@ -37,7 +37,8 @@ const char micro_device[]="/dev/ttyS1";
 const char micro_lock[]="/var/lock/micro-evtd";
 const char strokTest[] = ",=\n";
 char* pDelayProcesses = NULL;
-char i_debug=0;
+char debug=0;
+char iNotQuiet=1;
 int i_FileDescriptor = 0;
 int i_Poll = 0;
 int mutexId=0;
@@ -208,7 +209,8 @@ static void lockMutex(char iLock) {
 */
 static int writeUART(int n, unsigned char* output)
 {
-	unsigned char icksum = 0;
+	unsigned char txcksum = 0;
+	unsigned char rxcksum = 0;
 	unsigned char rbuf[35];
 	unsigned char tbuf[35];
 	char retries = 2;
@@ -222,14 +224,15 @@ static int writeUART(int n, unsigned char* output)
 	if (n >0) {
 		/* Calculate the checksum and populate the output buffer */
 		for (i=0;i<n;i++) {
-			icksum -= tbuf[i] = output[i];
+			txcksum -= tbuf[i] = output[i];
 		}
 
-		tbuf[n] = icksum;
+		tbuf[n] = txcksum;
 	}
         /*********** or else what? *********/
 	//min should probably be 2 to be a valid command
 	//could check max length while at it
+	//generally validate the format
 
 	lockMutex(1);
 
@@ -263,6 +266,25 @@ static int writeUART(int n, unsigned char* output)
 			len = read(i_FileDescriptor, rbuf, sizeof(rbuf));
 		}
 
+		unsigned char txlen  = n+1;
+                unsigned char txmode = tbuf[0];
+                unsigned char txcmd  = tbuf[1];
+
+		if (debug)
+                {
+                        printf("sent:\n");
+                        printf("raw:  ");
+                        for (i=0;i<txlen;i++)
+                                printf("%02x ", tbuf[i]);
+                        printf("\n");
+                        printf("data: ");
+                        for (i=2;i<txlen-1;i++)
+                                printf("%02x ", tbuf[i]);
+                        printf("\n");
+                        printf("length: %d mode: %02x cmd: %02x checksum: %02x \n\n",txlen,txmode,txcmd,txcksum);
+
+		}
+
 		/* Too little data? Yes, its an error */
 		//mode + cmd + status + checksum
 		if (len < 4)
@@ -274,20 +296,25 @@ static int writeUART(int n, unsigned char* output)
 
 		/* We received some data */
 		// Calculate data sum for validation
-		icksum = 0;
 		for (i=0;i<len;i++)
-			icksum -= rbuf[i];
+			rxcksum -= rbuf[i];
 
 		// Process if data valid
-		if (icksum !=0)
+		if (rxcksum !=0)
 		{
-			printf("%s: %d\n", "invalid checksum received",icksum);
+			printf("%s: %d\n", "invalid checksum received",rxcksum);
                         reset();
                         continue;
 		}
 
 		//if we got this far the micon responded, no need to retry
 		retries = 0;
+
+		//ideally we'll swap this for the error code returned by the micon
+		//I'm not currently aware how to distinguish between an error code
+		//and a valid 1 byte message that happens to be in the same range.
+		//for now 0=successful response -1=max retries exceeded.
+		iReturn = 0;
 
 		// Check if returned command matches sent command
 		if (rbuf[1] != output[1])
@@ -296,14 +323,31 @@ static int writeUART(int n, unsigned char* output)
 			break;
 		}
 
-		//0 == success
-		iReturn = (int)rbuf[2+len-4];
+		unsigned char rxmode = rbuf[0];
+		unsigned char rxcmd  = rbuf[1];
+		unsigned char rxchk  = rbuf[len-1];
+
+		if (debug)
+		{
+			printf("response:\n");
+			printf("raw:  ");
+			for (i=0;i<len;i++)
+				printf("%02x ", rbuf[i]);
+			printf("\n");
+			printf("data: ");
+			for (i=2;i<len-1;i++)
+				printf("%02x ", rbuf[i]);
+			printf("\n");
+			printf("length: %d mode: %02x cmd: %02x checksum: %02x(%d) \n\n",len,rxmode,rxcmd,rxchk,rxcksum);
+		}
 
 		//if response larger than min, data returned
-		if (len > 4)
+		if (iNotQuiet)
 		{
 			//if command is known to return a string, zero terminate and print as string
-			if ((rbuf[1] & 0x90) || (rbuf[1] & 0xa0) || ((rbuf[1] >= 0x80) && (rbuf[1] <= 0x83)))
+			//add some validation in case of invalid chars?
+			//for now rely on errors being one char and strings always being longer
+			if (rbuf[1] >= 0x80 && len > 5)
 			{
 				rbuf[len-1]=0;
 				printf("%s\n",rbuf + 2);
@@ -311,8 +355,9 @@ static int writeUART(int n, unsigned char* output)
 			else
 			{
 				//iterate through data bytes and print
-				for (i=0;i<len-4;i++)
-					printf("%d ", rbuf[2+i]);
+				for (i=2;i<len-1;i++)
+					printf("%d", rbuf[i]);
+				printf("\n");
 			}
 		}
 
@@ -339,9 +384,9 @@ static int writeUART(int n, unsigned char* output)
 int main(int argc, char *argv[])
 {
 	int iLen;
-	int i;
+	int i = 0;
 	char *thisarg;
-	char iNotQuiet=1;
+//	char iNotQuiet=1;
 	unsigned char uiMessage[36] = {0,};
 	char* pos = NULL;
 
@@ -369,6 +414,10 @@ int main(int argc, char *argv[])
 			printf("%s %s (%s)\n", strTitle, strVersion, strRevision);
 			exit(0);
 			break;
+		case 'd':
+                        --argc;
+                        debug = 1;
+                        break;
 		case 'q':
 			--argc;
 			iNotQuiet = 0;
@@ -401,13 +450,14 @@ int main(int argc, char *argv[])
 
 				// Push it out and return result
 				i = writeUART(iLen, uiMessage);
-				//writeUART handles retries, reports back success/fail sort of
-				//if it failed, do we continue or stop and return error?
-				//maybe a flag? or just have user call multiple times if needed?
-				//seems like return failure on first failure allow sane return code
-				if (iNotQuiet)
-					printf("%d\n", i);
-				// Locate anymore commands?
+
+				//current logic only returns non-zero for com failure
+				//assume all future cmds will fail and just exit.
+				if (i != 0)
+				{
+					close_serial();
+					exit(i);
+				}
 				pos = strtok(NULL, ", ");
 			};
 
