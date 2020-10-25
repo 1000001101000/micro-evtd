@@ -77,11 +77,14 @@ static void open_serial(void)
 	struct termios newtio;
 	unsigned char testmsg[] = {0x00,0x03,0xfd};
 	unsigned char testbuf[4];
+	int j=0,tmp=0,tmplen=0;
+	struct timeval tmptime;
+	fd_set tmpFS;
 
 	//count of ports in the ports list
 	int portcnt = sizeof(micro_devices)/sizeof(micro_devices[0]);
 
-	for (int j = 0; j < portcnt; j++)
+	for (j = 0; j < portcnt; j++)
 	{
 		//if port does not exist, just move on
 		if( access( micro_devices[j], F_OK ) == -1 )
@@ -111,9 +114,7 @@ static void open_serial(void)
                 ioctl(i_FileDescriptor, TCFLSH, 2);
 
 		//send a test command, striped down for speed/simplicity
-		int tmp = write(i_FileDescriptor, testmsg, 3);
-		fd_set tmpFS;
-		struct timeval tmptime;
+		tmp = write(i_FileDescriptor, testmsg, 3);
 		tmptime.tv_usec = 50000;
                 tmptime.tv_sec = 0;
                 FD_ZERO(&tmpFS);
@@ -127,7 +128,7 @@ static void open_serial(void)
 			continue;
 		}
 
-		int tmplen = read(i_FileDescriptor, testbuf, 4);
+		tmplen = read(i_FileDescriptor, testbuf, 4);
 
 		//finally, confirm response corresponds to the sent command
 		if (tmplen == 4 && testbuf[01] == 0x03)
@@ -258,6 +259,9 @@ static int writeUART(int n, unsigned char* output)
 	unsigned char rxcksum = 0;
 	unsigned char rbuf[35];
 	unsigned char tbuf[35];
+
+	unsigned char txlen=0, txmode=0, txcmd=0, rxmode=0, rxcmd=0, rxchk=0;
+
 	char retries = 2;
 	int i = 0;
 	fd_set fReadFS;
@@ -311,9 +315,9 @@ static int writeUART(int n, unsigned char* output)
 			len = read(i_FileDescriptor, rbuf, sizeof(rbuf));
 		}
 
-		unsigned char txlen  = n+1;
-                unsigned char txmode = tbuf[0];
-                unsigned char txcmd  = tbuf[1];
+		txlen  = n+1;
+                txmode = tbuf[0];
+                txcmd  = tbuf[1];
 
 		if (debug)
                 {
@@ -368,9 +372,9 @@ static int writeUART(int n, unsigned char* output)
 			break;
 		}
 
-		unsigned char rxmode = rbuf[0];
-		unsigned char rxcmd  = rbuf[1];
-		unsigned char rxchk  = rbuf[len-1];
+		rxmode = rbuf[0];
+		rxcmd  = rbuf[1];
+		rxchk  = rbuf[len-1];
 
 		if (debug)
 		{
