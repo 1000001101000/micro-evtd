@@ -3,16 +3,19 @@ To Do List
 
 update readme to reflect current functionality/purpose
 set new version number and title
-simplify makefile to reflect current codebase
-add make target for static binary
+adjust program flow to parse all arguments before connecting
+//simplify makefile to reflect current codebase
+//add make target for static binary // there already was one...lol
 investigate ways to generate binaries for ancient kernels (2.4.17)
-add option to specify serial device
-investigate an auto-detect function for serial device
-rework program flow to remove goto statements
+add option to specify serial device, needs program flow adjustment
+//investigate an auto-detect function for serial device
+//rework program flow to remove goto statements
 rework program flow to minimize global vars
-add logic to set return code on various failures.
-look at creating debug logic to print raw messages 
-add support for micon V1 in addition to current micon V2
+//add logic to set return code on various failures. ** just com failure for now
+//look at creating debug logic to print raw messages 
+add support for micon V1 in addition to current micon V2, also needs flow  adjustment
 investigate logic to support alternate OS (FreeBSD/NetBSD/Windows)
+//FreeBSD will compile with minor changes but doesn't work.
+//hangs trying to open port, seems like configuring port not working 
 
 generally ensure code works with kernels 2.4 -> 5.8+ on armv5/armv7/PowerPC/mips/amd64
