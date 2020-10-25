@@ -33,7 +33,13 @@
 const char strTitle[]="Micro Event Daemon for LSP/LSL/Kuro/TS";
 const char strVersion[]="3.4";
 char strRevision[]="$Revision$";
-const char micro_device[]="/dev/ttyS1";
+const char micro_devices[][15] = {
+                             "/dev/ttyS1",
+                             "/dev/ttyS3",
+                             "/dev/ttyS2",
+			     "/dev/ttyS0",
+                         };
+
 const char micro_lock[]="/var/lock/micro-evtd";
 const char strokTest[] = ",=\n";
 char* pDelayProcesses = NULL;
@@ -50,6 +56,8 @@ int resourceLock_fd = 0;
 #endif
 
 static void open_serial(void);
+static void close_serial(void);
+static void reset(void);
 static int writeUART(int, unsigned char*);
 
 /**
@@ -67,30 +75,67 @@ static int writeUART(int, unsigned char*);
 static void open_serial(void)
 {
 	struct termios newtio;
+	unsigned char testmsg[] = {0x00,0x03,0xfd};
+	unsigned char testbuf[4];
 
-	/* Need read/write access to the micro  */
-	i_FileDescriptor = open(micro_device, O_RDWR);
+	//count of ports in the ports list
+	int portcnt = sizeof(micro_devices)/sizeof(micro_devices[0]);
 
-	/* Successed? */
-	if(i_FileDescriptor < 0) {
-		perror(micro_device);
-	}
+	for (int j = 0; j < portcnt; j++)
+	{
+		//if port does not exist, just move on
+		if( access( micro_devices[j], F_OK ) == -1 )
+		{
+			continue;
+		}
 
-	/* Yes */
-	else {
+		//see if we can open the port
+		i_FileDescriptor = open(micro_devices[j], O_RDWR);
+		//if we can't move on
+		if(i_FileDescriptor < 0)
+		{
+                	continue;
+        	}
 		ioctl(i_FileDescriptor, TCFLSH, 2);
-		/* Clear data structures */
-		memset(&newtio, 0, sizeof(newtio));
+                /* Clear data structures */
+                memset(&newtio, 0, sizeof(newtio));
 
-		newtio.c_iflag =IGNBRK;
-		newtio.c_cflag = PARENB | CLOCAL | CREAD | CSTOPB | CS8 | B38400;
-		newtio.c_lflag &= (~ICANON);
-		newtio.c_cc[VMIN] = 0;
-		newtio.c_cc[VTIME] = 100;
+                newtio.c_iflag =IGNBRK;
+                newtio.c_cflag = PARENB | CLOCAL | CREAD | CSTOPB | CS8 | B38400;
+                newtio.c_lflag &= (~ICANON);
+                newtio.c_cc[VMIN] = 0;
+                newtio.c_cc[VTIME] = 100;
 
-		/* Update tty settings */
-		ioctl(i_FileDescriptor, TCSETS, &newtio);
-		ioctl(i_FileDescriptor, TCFLSH, 2);
+                /* Update tty settings */
+                ioctl(i_FileDescriptor, TCSETS, &newtio);
+                ioctl(i_FileDescriptor, TCFLSH, 2);
+
+		//send a test command, striped down for speed/simplicity
+		int tmp = write(i_FileDescriptor, testmsg, 3);
+		fd_set tmpFS;
+		struct timeval tmptime;
+		tmptime.tv_usec = 50000;
+                tmptime.tv_sec = 0;
+                FD_ZERO(&tmpFS);
+                FD_SET(i_FileDescriptor, &tmpFS);
+		usleep(50000);
+		tmp = select(i_FileDescriptor + 1, &tmpFS, NULL, NULL, &tmptime);
+
+		//if no bytes are returned, move on
+		if (tmp != 1)
+		{
+			continue;
+		}
+
+		int tmplen = read(i_FileDescriptor, testbuf, 4);
+
+		//finally, confirm response corresponds to the sent command
+		if (tmplen == 4 && testbuf[01] == 0x03)
+		{
+			return;
+		}
+
+		close_serial();
 	}
 }
 
@@ -386,7 +431,6 @@ int main(int argc, char *argv[])
 	int iLen;
 	int i = 0;
 	char *thisarg;
-//	char iNotQuiet=1;
 	unsigned char uiMessage[36] = {0,};
 	char* pos = NULL;
 
