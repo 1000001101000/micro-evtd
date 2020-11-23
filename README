@@ -20,5 +20,9 @@ micro-evtd -s 0003
 Set a message on the LCD screen:
 micro-evtd -s 20905465726173746174696f6e2061726d2044656269616e20496e7374616c6c657231
 
-I've tested it on armel/armhf and amd64 based Terastations 
+I've tested it on armel,armhf,PowerPC and amd64 based Linkstation/Terastations 
+
+So far I've mainly tested it under Debian Linux but it should work on any Linux distro if you compile it against that version's libc/etc.
+
+You can also build with the "static " option to create a larger binary which will work accross different distros/versions. If you're looking to run it under a really old distro/firmware (kernel 2.4 based) you'll need to build it against libraries old enough to support that. 
 
