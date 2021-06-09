@@ -33,11 +33,17 @@
 const char strTitle[]="Micro Event Daemon for LSP/LSL/Kuro/TS";
 const char strVersion[]="3.4";
 char strRevision[]="$Revision$";
-const char micro_devices[][15] = {
+const char micro_devicesV2[][15] = {
                              "/dev/ttyS1",
                              "/dev/ttyS3",
                              "/dev/ttyS2",
 			     "/dev/ttyS0",
+                         };
+
+const char micro_devicesV3[][15] = {
+                             "/dev/ttyUSB0",
+                             "/dev/ttyS0",
+                             "/dev/ttyS1",
                          };
 
 const char micro_lock[]="/var/lock/micro-evtd";
@@ -55,15 +61,16 @@ int resourceLock_fd = 0;
   long override_time=0;
 #endif
 
-static void open_serial(void);
+static void open_serialV2(void);
+static void open_serialV3(void);
 static void close_serial(void);
-static void reset(void);
-static int writeUART(int, unsigned char*);
+static void resetV2(void);
+static int writeUARTV2(int, unsigned char*);
 
 /**
 ************************************************************************
 *
-*  function    : open_serial()
+*  function    : open_serialV2()
 *
 *  description : Gain access to the micro interface.
 *
@@ -72,7 +79,7 @@ static int writeUART(int, unsigned char*);
 *  returns     : 		void
 ************************************************************************
 */
-static void open_serial(void)
+static void open_serialV2(void)
 {
 	struct termios newtio;
 	unsigned char testmsg[] = {0x00,0x03,0xfd};
@@ -82,18 +89,18 @@ static void open_serial(void)
 	fd_set tmpFS;
 
 	//count of ports in the ports list
-	int portcnt = sizeof(micro_devices)/sizeof(micro_devices[0]);
+	int portcnt = sizeof(micro_devicesV2)/sizeof(micro_devicesV2[0]);
 
 	for (j = 0; j < portcnt; j++)
 	{
 		//if port does not exist, just move on
-		if( access( micro_devices[j], F_OK ) == -1 )
+		if( access( micro_devicesV2[j], F_OK ) == -1 )
 		{
 			continue;
 		}
 
 		//see if we can open the port
-		i_FileDescriptor = open(micro_devices[j], O_RDWR);
+		i_FileDescriptor = open(micro_devicesV2[j], O_RDWR);
 		//if we can't move on
 		if(i_FileDescriptor < 0)
 		{
@@ -139,6 +146,76 @@ static void open_serial(void)
 		close_serial();
 	}
 }
+
+static void open_serialV3(void)
+{
+        struct termios newtio;
+        unsigned char testmsg[] = "VER_GET\r";
+        unsigned char testbuf[64];
+        int j=0,tmp=0,tmplen=0;
+        struct timeval tmptime;
+        fd_set tmpFS;
+
+        //count of ports in the ports list
+        int portcnt = sizeof(micro_devicesV2)/sizeof(micro_devicesV2[0]);
+
+        for (j = 0; j < portcnt; j++)
+        {
+		//if port does not exist, just move on
+                if( access( micro_devicesV3[j], F_OK ) == -1 )
+                {
+                        continue;
+                }
+
+                //see if we can open the port
+                i_FileDescriptor = open(micro_devicesV3[j], O_RDWR);
+                //if we can't move on
+                if(i_FileDescriptor < 0)
+                {
+                        continue;
+                }
+                ioctl(i_FileDescriptor, TCFLSH, 2);
+                /* Clear data structures */
+                memset(&newtio, 0, sizeof(newtio));
+
+                newtio.c_iflag =IGNBRK;
+                newtio.c_cflag = CLOCAL | CREAD | CSTOPB | CS8 | B57600;
+                newtio.c_lflag &= (~ICANON);
+                newtio.c_cc[VMIN] = 0;
+                newtio.c_cc[VTIME] = 100;
+
+                /* Update tty settings */
+                ioctl(i_FileDescriptor, TCSETS, &newtio);
+                ioctl(i_FileDescriptor, TCFLSH, 2);
+
+                //send a test command, striped down for speed/simplicity
+                tmp = write(i_FileDescriptor, testmsg, sizeof(testmsg)-1);
+                tmptime.tv_usec = 50000;
+                tmptime.tv_sec = 0;
+                FD_ZERO(&tmpFS);
+                FD_SET(i_FileDescriptor, &tmpFS);
+                usleep(350000);
+                tmp = select(i_FileDescriptor + 1, &tmpFS, NULL, NULL, &tmptime);
+
+                //if no bytes are returned, move on
+                if (tmp != 1)
+                {
+                        continue;
+                }
+
+		tmplen = read(i_FileDescriptor, testbuf, 64);
+		testbuf[tmplen] = '\0';
+
+                //finally, confirm response corresponds to the sent command
+                if (tmplen > 1)
+                {
+                        return;
+                }
+
+                close_serial();
+        }
+}
+
 
 /**
 ************************************************************************
@@ -186,7 +263,7 @@ static void close_serial(void)
 /**
 ************************************************************************
 *
-*  function    : reset()
+*  function    : resetV2()
 *
 *  description : Demand micro reset.
 *
@@ -195,7 +272,7 @@ static void close_serial(void)
 *  returns     : 		void
 ************************************************************************
 */
-static void reset(void)
+static void resetV2(void)
 {
 	char buf[40]={0xFF,};
 	int i;
@@ -241,7 +318,7 @@ static void lockMutex(char iLock) {
 /**
 ************************************************************************
 *
-*  function    : writeUART()
+*  function    : writeUARTV2()
 *
 *  description : Send the supplied transmit buffer to the micro.  We
 *				 calculate and populate the checksum and return the
@@ -253,7 +330,7 @@ static void lockMutex(char iLock) {
 *  returns     : 		int					= micro return
 ************************************************************************
 */
-static int writeUART(int n, unsigned char* output)
+static int writeUARTV2(int n, unsigned char* output)
 {
 	unsigned char txcksum = 0;
 	unsigned char rxcksum = 0;
@@ -296,7 +373,7 @@ static int writeUART(int n, unsigned char* output)
 		if (iResult < n+1)
 		{
 			printf("%s: %d\n", "serial write failed",n);
-			reset();
+			resetV2();
 			continue;
 		}
 
@@ -339,7 +416,7 @@ static int writeUART(int n, unsigned char* output)
 		if (len < 4)
 		{
 			printf("%s: %d\n", "no response",n);
-                        reset();
+                        resetV2();
                         continue;
 		}
 
@@ -352,7 +429,7 @@ static int writeUART(int n, unsigned char* output)
 		if (rxcksum !=0)
 		{
 			printf("%s: %d\n", "invalid checksum received",rxcksum);
-                        reset();
+                        resetV2();
                         continue;
 		}
 
@@ -368,6 +445,7 @@ static int writeUART(int n, unsigned char* output)
 		// Check if returned command matches sent command
 		if (rbuf[1] != output[1])
 		{
+			iReturn = 99;
 			printf("%s: %d\n", "invalid command",output[1]);
 			break;
 		}
@@ -414,6 +492,57 @@ static int writeUART(int n, unsigned char* output)
 
 	lockMutex(0);
 	return iReturn;
+}
+
+
+
+static int writeUARTV3(char* msg)
+{
+	char inbuf[32];
+	int msglen = strlen(msg);
+	int tmp,tmplen = 0;
+	struct timeval tmptime;
+        fd_set tmpFS;
+
+	lockMutex(1);
+	msg[msglen] = '\r';//remove the ternminator and add new line to make micon happy
+
+	tmp = write(i_FileDescriptor, msg, msglen);
+	msg[msglen] = '\0'; //restore terminator when done
+
+
+	if (tmp != msglen)
+	{
+		return(99);
+	}
+
+        tmptime.tv_usec = 50000;
+        tmptime.tv_sec = 0;
+        FD_ZERO(&tmpFS);
+        FD_SET(i_FileDescriptor, &tmpFS);
+        usleep(350000);
+        tmp = select(i_FileDescriptor + 1, &tmpFS, NULL, NULL, &tmptime);
+
+	if (tmp != 1)
+        {
+                return(99);
+        }
+
+        tmplen = read(i_FileDescriptor, inbuf, 32);
+        inbuf[tmplen] = '\0';
+
+	if (inbuf[tmplen-1] != 0x0a)
+	{
+		return(99);
+	}
+
+	if (iNotQuiet)
+        {
+		printf("%s",inbuf);
+	}
+
+        lockMutex(0);
+        return 0;
 }
 
 /**
@@ -482,8 +611,23 @@ int main(int argc, char *argv[])
 				resourceLock_fd = open(micro_lock, O_WRONLY|O_CREAT, 0700);
 			}
 
+			if (thisarg[1] == '3')
+			{
+				open_serialV3();
+				pos = strtok(*argv, ",");
+				while (pos != 0)
+				{
+					i = writeUARTV3(pos);
+					pos = strtok(NULL, ",");
+				};
+				close_serial();
+				exit(i);
+                        	break;
+			}
+			else
+			{
 			// Allocate device
-			open_serial();
+			open_serialV2();
 			// Loop through batched commands
 			// is there any validation to do at this step? invalid chars?
 			pos = strtok(*argv, ", ");
@@ -497,7 +641,7 @@ int main(int argc, char *argv[])
 					//what does this do with non-hex chars?
 
 				// Push it out and return result
-				i = writeUART(iLen, uiMessage);
+				i = writeUARTV2(iLen, uiMessage);
 
 				//current logic only returns non-zero for com failure
 				//assume all future cmds will fail and just exit.
@@ -508,7 +652,7 @@ int main(int argc, char *argv[])
 				}
 				pos = strtok(NULL, ", ");
 			};
-
+			}
 			exit(0);
 			break;
 		}
