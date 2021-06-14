@@ -23,7 +23,6 @@ micro-evtd -s 20905465726173746174696f6e2061726d2044656269616e20496e7374616c6c65
 On Newer devices the sytnax is:
 micro-evtd -s3 "BOOT_END"
 
-
 micro-evtd -s3 "LCD_PUTS 0 Terastation x86","LCD_PUTS 1 Debian Installer"
 
 I've tested it on armel,armhf,PowerPC and amd64 based Linkstation/Terastations 
