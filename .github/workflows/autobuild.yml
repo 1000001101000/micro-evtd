@@ -13,9 +13,9 @@ jobs:
     - name: make output directory if needed
       run: mkdir bins || exit 0
     - name: update apt
-      run: apt-get update 
+      run: apt-get update crossbuild-essential-powerpc crossbuild-essential-armel crossbuild-essential-armhf crossbuild-essential-arm64
     - name: ensure build packages are installed
-      run: apt-get -y install gcc-powerpc-linux-gnu libc6-armel-cross libc6-dev-armel-cross binutils-arm-linux-gnueabi libncurses5-dev gcc-arm-linux-gnueabihf gcc-arm-linux-gnueabi build-essential git
+      run: apt-get -y install libncurses5-dev build-essential git 
     - name: build armhf binary
       run: make CROSS_COMPILE="arm-linux-gnueabihf-"
     - name: copy armhf bin to output directory
@@ -32,6 +32,12 @@ jobs:
       run: make CROSS_COMPILE="powerpc-linux-gnu-"
     - name: copy powerpc bin to output directory
       run: cp bin/micro-evtd bins/micro-evtd-powerpc
+    - name: make clean
+      run: make clean
+    - name: build arm64 binary
+      run: make CROSS_COMPILE="aarch64-linux-gnu-"
+    - name: copy arm64 bin to output directory
+      run: cp bin/micro-evtd bins/micro-evtd-arm64
     - name: make clean
       run: make clean
     - name: build amd64 binary
